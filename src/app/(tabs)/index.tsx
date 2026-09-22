@@ -7,12 +7,16 @@ import WeatherCard from "../../components/WeatherCard";
 import { useDebounce } from "../../hooks/use-debounce";
 import { cariKota } from "../../services/geocodingService";
 import { HasilGeocoding } from "../../types/geocoding";
+
 export default function HalamanUtama() {
   const [teksCari, setTeksCari] = useState("");
   const [hasil, setHasil] = useState<HasilGeocoding[]>([]);
   const [sedangMemuat, setSedangMemuat] = useState(false);
   const [pesanError, setPesanError] = useState<string | null>(null);
-  const teksTertunda = useDebounce(teksCari, 500);
+  
+  // --- LANGKAH 2: UBAH DELAY DEBOUNCE MENJADI 800 ---
+  const teksTertunda = useDebounce(teksCari, 800);
+
   useEffect(() => {
     if (teksTertunda.trim().length === 0) {
       setHasil([]);
@@ -21,6 +25,7 @@ export default function HalamanUtama() {
     }
     ambilData(teksTertunda);
   }, [teksTertunda]);
+
   async function ambilData(nama: string) {
     setSedangMemuat(true);
     setPesanError(null);
@@ -33,21 +38,38 @@ export default function HalamanUtama() {
       setSedangMemuat(false);
     }
   }
+
   return (
     <SafeAreaView style={{ flex: 1, padding: 16, gap: 16 }}>
       <SearchBox onCari={setTeksCari} />
       {sedangMemuat && <ActivityIndicator />}
+      
+      {/* --- LANGKAH 3: TAMBAH ACCESSIBILITY LABEL (ERROR) --- */}
       {pesanError && (
         <View>
-          <Text>{pesanError}</Text>
+          <Text accessibilityLabel={`Pesan error: ${pesanError}`}>
+            {pesanError}
+          </Text>
           <Button title="Coba Lagi" onPress={() => ambilData(teksTertunda)} />
         </View>
       )}
 
+      {/* --- LANGKAH 3: TAMBAH ACCESSIBILITY LABEL (KOSONG) --- */}
       {!sedangMemuat &&
         !pesanError &&
         teksTertunda.length > 0 &&
-        hasil.length === 0 && <Text>Kota tidak ditemukan</Text>}
+        hasil.length === 0 && (
+          <Text accessibilityLabel="Pesan: Kota tidak ditemukan">
+            Kota tidak ditemukan
+          </Text>
+        )}
+
+      {/* --- LANGKAH 1: INDIKATOR JUMLAH HASIL --- */}
+      {hasil.length > 0 && (
+        <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+          Ditemukan {hasil.length} kota
+        </Text>
+      )}
 
       {hasil.map((kota) => (
         <WeatherCard
