@@ -1,6 +1,12 @@
 // src/app/(tabs)/index.tsx
 import { useState, useEffect, useRef } from "react";
-import { View, Text, ActivityIndicator, Button, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  Button,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SearchBox from "../../components/SearchBox";
 import WeatherCard from "../../components/WeatherCard";
@@ -21,19 +27,23 @@ export default function HalamanUtama() {
   const [hasilPencarian, setHasilPencarian] = useState<HasilGeocoding[]>([]);
   const [kotaTerpilih, setKotaTerpilih] = useState<HasilGeocoding | null>(null);
   const [cuaca, setCuaca] = useState<DataCuacaLengkap | null>(null);
-  const [kualitasUdara, setKualitasUdara] = useState<DataKualitasUdara | null>(null);
+  const [kualitasUdara, setKualitasUdara] = useState<DataKualitasUdara | null>(
+    null,
+  );
   const [sedangMemuat, setSedangMemuat] = useState(false);
   const [pesanError, setPesanError] = useState<string | null>(null);
-  
+
   const teksTertunda = useDebounce(teksCari, 500);
   const requestIdRef = useRef(0); // pencegah race condition
-  
+
   useEffect(() => {
     if (teksTertunda.trim().length === 0) {
       setHasilPencarian([]);
       return;
     }
-    cariKota(teksTertunda).then(setHasilPencarian).catch(() => setHasilPencarian([]));
+    cariKota(teksTertunda)
+      .then(setHasilPencarian)
+      .catch(() => setHasilPencarian([]));
   }, [teksTertunda]);
 
   async function pilihKota(kota: HasilGeocoding) {
@@ -41,14 +51,14 @@ export default function HalamanUtama() {
     const idSaatIni = ++requestIdRef.current;
     setSedangMemuat(true);
     setPesanError(null);
-    
+
     try {
       const [dataCuaca, dataAQI] = await Promise.all([
         ambilCuaca(kota.latitude, kota.longitude),
         ambilKualitasUdara(kota.latitude, kota.longitude),
       ]);
       if (idSaatIni !== requestIdRef.current) return; // hasil basi, abaikan
-      
+
       setCuaca(dataCuaca);
       // PERBAIKAN: Teks "Modul Praktikum..." yang nyangkut sudah dihapus di sini
       setKualitasUdara(dataAQI);
@@ -59,7 +69,7 @@ export default function HalamanUtama() {
       if (idSaatIni === requestIdRef.current) setSedangMemuat(false);
     }
   }
-  
+
   return (
     <SafeAreaView style={{ flex: 1, padding: 16, gap: 16 }}>
       <SearchBox onCari={setTeksCari} />
@@ -79,16 +89,30 @@ export default function HalamanUtama() {
         </View>
       )}
       {cuaca && kualitasUdara && kotaTerpilih && !sedangMemuat && (
-        <WeatherCard
-          kota={kotaTerpilih.name}
-          suhu={cuaca.saatIni.suhu}
-          tingkatAQI={konversiTingkatAQI(kualitasUdara.indeksAQI)}
-          indeksAQI={kualitasUdara.indeksAQI}
-        />
+        <View style={{ gap: 8 }}>
+          <WeatherCard
+            kota={kotaTerpilih.name}
+            suhu={cuaca.saatIni.suhu}
+            tingkatAQI={konversiTingkatAQI(kualitasUdara.indeksAQI)}
+            indeksAQI={kualitasUdara.indeksAQI}
+          />
+          <Text
+            style={{ textAlign: "center", fontSize: 14, fontWeight: "500" }}
+          >
+            Min: {cuaca.harian.suhuMinimal[0]}°C | Maks:{" "}
+            {cuaca.harian.suhuMaksimal[0]}°C
+          </Text>
+        </View>
       )}
       {cuaca && (
         <Text style={{ fontSize: 12, color: "#888" }}>
-          Kondisi: {labelKodeCuaca(cuaca.saatIni.kodeCuaca)} • Angin {cuaca.saatIni.kecepatanAngin} km/j
+          Kondisi: {labelKodeCuaca(cuaca.saatIni.kodeCuaca)} • Angin{" "}
+          {cuaca.saatIni.kecepatanAngin} km/j
+        </Text>
+      )}
+      {kualitasUdara && (
+        <Text style={{ fontSize: 12, color: "#888", textAlign: "center" }}>
+          PM2.5: {kualitasUdara.pm25} | PM10: {kualitasUdara.pm10}
         </Text>
       )}
       <AtribusiCuaca />
