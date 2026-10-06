@@ -1,6 +1,6 @@
 // src/app/(tabs)/riwayat.tsx
 import { useState, useCallback } from "react";
-import { View, Text, Button, Alert } from "react-native";
+import { View, Text, Button, Alert, Platform } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ambilSemuaFavorit, hapusFavorit } from "../../services/favoritStorage";
@@ -15,18 +15,29 @@ export default function TabRiwayat() {
     }, [])
   );
 
+  async function eksekusiHapus(id: number) {
+    await hapusFavorit(id);
+    setDaftarFavorit((prev) => prev.filter((k) => k.id !== id));
+  }
+
   function konfirmasiHapus(kota: KotaFavorit) {
-    Alert.alert("Konfirmasi Hapus", `Yakin hapus ${kota.nama}?`, [
-      { text: "Batal", style: "cancel" },
-      {
-        text: "Hapus",
-        style: "destructive",
-        onPress: async () => {
-          await hapusFavorit(kota.id);
-          setDaftarFavorit((prev) => prev.filter((k) => k.id !== kota.id));
+    if (Platform.OS === "web") {
+      // Tampilan pop-up khusus Browser Web
+      const yakin = window.confirm(`Yakin hapus ${kota.nama}?`);
+      if (yakin) {
+        eksekusiHapus(kota.id);
+      }
+    } else {
+      // Tampilan pop-up native Android / iOS
+      Alert.alert("Konfirmasi Hapus", `Yakin hapus ${kota.nama}?`, [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Hapus",
+          style: "destructive",
+          onPress: () => eksekusiHapus(kota.id),
         },
-      },
-    ]);
+      ]);
+    }
   }
 
   return (
