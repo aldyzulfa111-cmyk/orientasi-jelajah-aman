@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import SearchBox from "../../components/SearchBox";
 import WeatherCard from "../../components/WeatherCard";
 import AtribusiCuaca from "../../components/AtribusiCuaca";
@@ -20,10 +21,7 @@ import { labelKodeCuaca } from "../../constants/weatherCodes";
 
 import { HasilGeocoding } from "../../types/geocoding";
 import { DataCuacaLengkap, DataKualitasUdara } from "../../types/weather";
-import {
-  mintaIzinLokasi,
-  ambilKoordinatSaatIni,
-} from "../../services/locationService";
+import { mintaIzinLokasi, ambilKoordinatSaatIni } from "../../services/locationService";
 
 export default function HalamanUtama() {
   const [teksCari, setTeksCari] = useState("");
@@ -38,7 +36,7 @@ export default function HalamanUtama() {
   const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
 
   const teksTertunda = useDebounce(teksCari, 500);
-  const requestIdRef = useRef(0); // pencegah race condition
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     if (teksTertunda.trim().length === 0) {
@@ -61,7 +59,7 @@ export default function HalamanUtama() {
         ambilCuaca(kota.latitude, kota.longitude),
         ambilKualitasUdara(kota.latitude, kota.longitude),
       ]);
-      if (idSaatIni !== requestIdRef.current) return; // hasil basi, abaikan
+      if (idSaatIni !== requestIdRef.current) return;
 
       setCuaca(dataCuaca);
       setKualitasUdara(dataAQI);
@@ -76,15 +74,11 @@ export default function HalamanUtama() {
   async function gunakanLokasiSaatIni() {
     const status = await mintaIzinLokasi();
     if (status === "denied") {
-      setPesanLokasi(
-        "Izin lokasi ditolak. Silakan cari kota secara manual di atas.",
-      );
+      setPesanLokasi("Izin lokasi ditolak. Silakan cari kota secara manual di atas.");
       return;
     }
     if (status === "unavailable") {
-      setPesanLokasi(
-        "Layanan lokasi tidak aktif di perangkat ini. Silakan cari kota secara manual.",
-      );
+      setPesanLokasi("Layanan lokasi tidak aktif di perangkat ini. Silakan cari kota secara manual.");
       return;
     }
     setPesanLokasi(null);
@@ -119,20 +113,27 @@ export default function HalamanUtama() {
         </View>
       )}
       {cuaca && kualitasUdara && kotaTerpilih && !sedangMemuat && (
-        <View style={{ gap: 8 }}>
+        <>
           <WeatherCard
             kota={kotaTerpilih.name}
             suhu={cuaca.saatIni.suhu}
             tingkatAQI={konversiTingkatAQI(kualitasUdara.indeksAQI)}
-            indeksAQI={kualitasUdara.indeksAQI}
           />
-          <Text
-            style={{ textAlign: "center", fontSize: 14, fontWeight: "500" }}
-          >
-            Min: {cuaca.harian.suhuMinimal[0]}°C | Maks:{" "}
-            {cuaca.harian.suhuMaksimal[0]}°C
-          </Text>
-        </View>
+          <Button
+            title="Tambahkan ke Favorit"
+            onPress={() =>
+              router.push({
+                pathname: "/tambah-favorit",
+                params: {
+                  id: String(kotaTerpilih.id),
+                  nama: kotaTerpilih.name,
+                  lat: String(kotaTerpilih.latitude),
+                  lon: String(kotaTerpilih.longitude),
+                },
+              })
+            }
+          />
+        </>
       )}
       {cuaca && (
         <Text style={{ fontSize: 12, color: "#888" }}>
