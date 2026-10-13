@@ -1,7 +1,7 @@
 // src/db/database.ts
 import * as SQLite from "expo-sqlite";
 
-const VERSI_DATABASE = 2; // versi 2 untuk Latihan Mandiri
+const VERSI_DATABASE = 2;
 
 export async function ambilDatabase() {
   const db = await SQLite.openDatabaseAsync("jelajah_aman.db");
@@ -9,7 +9,6 @@ export async function ambilDatabase() {
   return db;
 }
 
-// Alias agar kompatibel dengan pemanggilan bukaDatabase jika ada
 export const bukaDatabase = ambilDatabase;
 
 async function migrasiDatabase(db: SQLite.SQLiteDatabase) {
@@ -33,7 +32,7 @@ async function migrasiDatabase(db: SQLite.SQLiteDatabase) {
     versiSaatIni = 1;
   }
 
-  // Migrasi versi 2
+  // Migrasi versi 2 sesuai modul praktikum
   if (versiSaatIni < 2) {
     await db.execAsync(
       "ALTER TABLE cache_cuaca ADD COLUMN jumlah_dibuka INTEGER NOT NULL DEFAULT 0;"
