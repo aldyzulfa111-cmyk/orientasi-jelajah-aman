@@ -48,3 +48,11 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+
+
+## Penjelasan Status Data Cuaca & Migrasi
+- **Cache-segar**: Data cuaca yang diambil langsung dari database SQLite lokal karena usianya masih dalam rentang waktu TTL (di bawah 30 menit), sehingga aplikasi tidak perlu melakukan permintaan jaringan.
+- **Cache-basi**: Data lokal yang ditampilkan ketika perangkat berada dalam kondisi offline, meskipun usianya sudah melewati batas waktu TTL.
+- **First-run offline**: Kondisi ketika aplikasi dijalankan saat offline dan belum ada data tersimpan sama sekali di database lokal, sehingga aplikasi menampilkan informasi peringatan yang aman dari *crash*.
+- Label status data sangat penting bagi pengguna untuk memberikan transparansi mengenai sumber, kesegaran, dan keakuratan informasi cuaca yang sedang dilihat.
