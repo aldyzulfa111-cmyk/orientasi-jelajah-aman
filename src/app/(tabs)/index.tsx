@@ -16,9 +16,18 @@ import AtribusiCuaca from "../../components/AtribusiCuaca";
 import StatusData from "../../components/StatusData";
 import { useDebounce } from "../../hooks/use-debounce";
 import { cariKota } from "../../services/geocodingService";
-import { ambilCuacaOfflineFirst, BATAS_CACHE_MS } from "../../services/cuacaRepository";
-import { bersihkanCacheLama, daftarKotaTersimpan } from "../../services/cacheRepository";
-import { mintaIzinLokasi, ambilKoordinatSaatIni } from "../../services/locationService";
+import {
+  ambilCuacaOfflineFirst,
+  BATAS_CACHE_MS,
+} from "../../services/cuacaRepository";
+import {
+  bersihkanCacheLama,
+  daftarKotaTersimpan,
+} from "../../services/cacheRepository";
+import {
+  mintaIzinLokasi,
+  ambilKoordinatSaatIni,
+} from "../../services/locationService";
 import { konversiTingkatAQI } from "../../services/weatherAdapter";
 import { labelKodeCuaca } from "../../constants/weatherCodes";
 import { HasilGeocoding } from "../../types/geocoding";
@@ -29,7 +38,9 @@ export default function HalamanUtama() {
   const [hasilPencarian, setHasilPencarian] = useState<HasilGeocoding[]>([]);
   const [kotaTerpilih, setKotaTerpilih] = useState<HasilGeocoding | null>(null);
   const [hasil, setHasil] = useState<HasilCuacaOffline | null>(null);
-  const [kotaTersimpan, setKotaTersimpan] = useState<RingkasanKotaTersimpan[]>([]);
+  const [kotaTersimpan, setKotaTersimpan] = useState<RingkasanKotaTersimpan[]>(
+    [],
+  );
   const [sedangMemuat, setSedangMemuat] = useState(false);
   const [pesanError, setPesanError] = useState<string | null>(null);
   const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
@@ -53,7 +64,9 @@ export default function HalamanUtama() {
       setHasilPencarian([]);
       return;
     }
-    cariKota(teksTertunda).then(setHasilPencarian).catch(() => setHasilPencarian([]));
+    cariKota(teksTertunda)
+      .then(setHasilPencarian)
+      .catch(() => setHasilPencarian([]));
   }, [teksTertunda]);
 
   async function pilihKota(kota: HasilGeocoding, paksaPerbarui = false) {
@@ -64,8 +77,13 @@ export default function HalamanUtama() {
 
     try {
       const data = await ambilCuacaOfflineFirst(
-        { id: kota.id, nama: kota.name, latitude: kota.latitude, longitude: kota.longitude },
-        { paksaPerbarui }
+        {
+          id: kota.id,
+          nama: kota.name,
+          latitude: kota.latitude,
+          longitude: kota.longitude,
+        },
+        { paksaPerbarui },
       );
       if (idSaatIni !== requestIdRef.current) return;
       setHasil(data);
@@ -74,7 +92,7 @@ export default function HalamanUtama() {
       if (idSaatIni !== requestIdRef.current) return;
       setHasil(null);
       setPesanError(
-        "Belum ada data tersimpan dan tidak ada koneksi internet. Sambungkan internet lalu coba lagi."
+        "Belum ada data tersimpan dan tidak ada koneksi internet. Sambungkan internet lalu coba lagi.",
       );
     } finally {
       if (idSaatIni === requestIdRef.current) setSedangMemuat(false);
@@ -84,11 +102,15 @@ export default function HalamanUtama() {
   async function gunakanLokasiSaatIni() {
     const status = await mintaIzinLokasi();
     if (status === "denied") {
-      setPesanLokasi("Izin lokasi ditolak. Silakan cari kota secara manual di atas.");
+      setPesanLokasi(
+        "Izin lokasi ditolak. Silakan cari kota secara manual di atas.",
+      );
       return;
     }
     if (status === "unavailable") {
-      setPesanLokasi("Layanan lokasi tidak aktif di perangkat ini. Silakan cari kota secara manual.");
+      setPesanLokasi(
+        "Layanan lokasi tidak aktif di perangkat ini. Silakan cari kota secara manual.",
+      );
       return;
     }
     setPesanLokasi(null);
@@ -109,8 +131,13 @@ export default function HalamanUtama() {
         keyboardShouldPersistTaps="handled"
       >
         <SearchBox onCari={setTeksCari} />
-        <Button title="Gunakan Lokasi Saat Ini" onPress={gunakanLokasiSaatIni} />
-        {pesanLokasi && <Text accessibilityLabel={pesanLokasi}>{pesanLokasi}</Text>}
+        <Button
+          title="Gunakan Lokasi Saat Ini"
+          onPress={gunakanLokasiSaatIni}
+        />
+        {pesanLokasi && (
+          <Text accessibilityLabel={pesanLokasi}>{pesanLokasi}</Text>
+        )}
         {hasilPencarian.map((kota) => (
           <TouchableOpacity key={kota.id} onPress={() => pilihKota(kota)}>
             <Text>{kota.name}</Text>
@@ -118,7 +145,9 @@ export default function HalamanUtama() {
         ))}
         {kotaTersimpan.length > 0 && (
           <View style={{ gap: 6 }}>
-            <Text style={{ fontWeight: "bold" }}>Tersimpan di perangkat (bisa dibuka offline)</Text>
+            <Text style={{ fontWeight: "bold" }}>
+              Tersimpan di perangkat (bisa dibuka offline)
+            </Text>
             {kotaTersimpan.map((k) => (
               <TouchableOpacity
                 key={k.kunci}
@@ -149,7 +178,10 @@ export default function HalamanUtama() {
         )}
         {hasil && kotaTerpilih && !sedangMemuat && (
           <>
-            <StatusData sumber={hasil.sumber} disimpanPada={hasil.disimpanPada} />
+            <StatusData
+              sumber={hasil.sumber}
+              disimpanPada={hasil.disimpanPada}
+            />
             <WeatherCard
               kota={kotaTerpilih.name}
               suhu={hasil.cuaca.saatIni.suhu}

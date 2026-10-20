@@ -1,35 +1,37 @@
-// src/app/(tabs)/riwayat.tsx
 import { useState, useCallback } from "react";
-import { View, Text, Button, Alert, Platform } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { View, Text, Button, Alert, Platform, ScrollView, TouchableOpacity } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ambilSemuaFavorit, hapusFavorit } from "../../services/favoritStorage";
-import { KotaFavorit } from "../../types/favorit";
+import { daftarKotaTersimpan, hapusCache } from "../../services/cacheRepository";
 
 export default function TabRiwayat() {
-  const [daftarFavorit, setDaftarFavorit] = useState<KotaFavorit[]>([]);
+  const [daftarRiwayat, setDaftarRiwayat] = useState<any[]>([]);
+  const router = useRouter();
 
   useFocusEffect(
     useCallback(() => {
-      ambilSemuaFavorit().then(setDaftarFavorit);
+      muatRiwayat();
     }, [])
   );
 
-  async function eksekusiHapus(id: number) {
-    await hapusFavorit(id);
-    setDaftarFavorit((prev) => prev.filter((k) => k.id !== id));
+  async function muatRiwayat() {
+    const data = await daftarKotaTersimpan();
+    setDaftarRiwayat(data);
   }
 
-  function konfirmasiHapus(kota: KotaFavorit) {
+  async function eksekusiHapus(id: number) {
+    await hapusCache(id);
+    muatRiwayat();
+  }
+
+  function konfirmasiHapus(kota: any) {
     if (Platform.OS === "web") {
-      // Tampilan pop-up khusus Browser Web
-      const yakin = window.confirm(`Yakin hapus ${kota.nama}?`);
+      const yakin = window.confirm(`Yakin hapus cache ${kota.nama}?`);
       if (yakin) {
         eksekusiHapus(kota.id);
       }
     } else {
-      // Tampilan pop-up native Android / iOS
-      Alert.alert("Konfirmasi Hapus", `Yakin hapus ${kota.nama}?`, [
+      Alert.alert("Konfirmasi Hapus", `Yakin hapus cache ${kota.nama}?`, [
         { text: "Batal", style: "cancel" },
         {
           text: "Hapus",
@@ -40,20 +42,52 @@ export default function TabRiwayat() {
     }
   }
 
+  function pilihKota(kota: any) {
+    // Navigasi kembali ke beranda dengan membawa parameter koordinat kota
+    router.push({
+      pathname: "/",
+      params: { lat: kota.latitude, lon: kota.longitude, nama: kota.nama },
+    });
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, padding: 16, gap: 12 }}>
-      <Text style={{ fontSize: 18, fontWeight: "bold" }}>Kota Favorit</Text>
-      <Text style={{ color: "#666" }}>Tersimpan {daftarFavorit.length} kota</Text>
-      {daftarFavorit.length === 0 && <Text>Belum ada kota favorit</Text>}
-      {daftarFavorit.map((kota) => (
-        <View
-          key={kota.id}
-          style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
-        >
-          <Text>{kota.nama}</Text>
-          <Button title="Hapus" onPress={() => konfirmasiHapus(kota)} />
-        </View>
-      ))}
+      <Text style={{ fontSize: 20, fontWeight: "bold" }}>Riwayat Pencarian & Cache</Text>
+      <Text style={{ color: "#666" }}>Tersimpan {daftarRiwayat.length} lokasi (Maks 10 terakhir)</Text>
+
+      {daftarRiwayat.length === 0 && (
+        <Text style={{ fontStyle: "italic", color: "#888", marginTop: 20 }}>
+          Belum ada riwayat pencarian. Cari kota di beranda untuk menyimpan cache offline!
+        </Text>
+      )}
+
+      <ScrollView contentContainerStyle={{ gap: 10 }}>
+        {daftarRiwayat.map((kota) => (
+          <View
+            key={kota.id}
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: 12,
+              backgroundColor: "#f9f9f9",
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: "#eee",
+            }}
+          >
+            <TouchableOpacity onPress={() => pilihKota(kota)} style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16, fontWeight: "600", color: "#007AFF" }}>
+                {kota.nama}
+              </Text>
+              <Text style={{ fontSize: 12, color: "#555" }}>
+                Dibuka: {kota.jumlahDibuka}x | Lat/Lon: {kota.latitude}, {kota.longitude}
+              </Text>
+            </TouchableOpacity>
+            <Button title="Hapus" color="#ff3b30" onPress={() => konfirmasiHapus(kota)} />
+          </View>
+        ))}
+      </ScrollView>
     </SafeAreaView>
   );
 }

@@ -119,3 +119,10 @@ export async function hapusSemuaCache() {
     console.error("Gagal menghapus semua cache:", error);
   }
 }
+/**
+ * Menghapus satu cache kota berdasarkan ID-nya
+ */
+export async function hapusCache(id: number) {
+  const db = await ambilDatabase();
+  await db.runAsync("DELETE FROM cache_cuaca WHERE id = ?;", [id]);
+}
