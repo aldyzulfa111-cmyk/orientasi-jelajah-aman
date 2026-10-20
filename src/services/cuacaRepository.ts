@@ -1,9 +1,7 @@
-// src/services/cuacaRepository.ts
 import { ambilCuaca } from "./weatherService";
 import { ambilKualitasUdara } from "./airQualityService";
 import { ambilCache, simpanCache } from "./cacheRepository";
 import { HasilCuacaOffline, KotaUntukCache } from "../types/cache";
-
 
 export const TTL_SEGAR_MS = 30 * 60 * 1000; // 30 menit
 export const BATAS_CACHE_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari

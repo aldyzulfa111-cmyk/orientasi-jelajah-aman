@@ -1,4 +1,3 @@
-// src/app/(tabs)/index.tsx
 import { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -32,18 +31,19 @@ import { konversiTingkatAQI } from "../../services/weatherAdapter";
 import { labelKodeCuaca } from "../../constants/weatherCodes";
 import { HasilGeocoding } from "../../types/geocoding";
 import { HasilCuacaOffline, RingkasanKotaTersimpan } from "../../types/cache";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function HalamanUtama() {
   const [teksCari, setTeksCari] = useState("");
   const [hasilPencarian, setHasilPencarian] = useState<HasilGeocoding[]>([]);
   const [kotaTerpilih, setKotaTerpilih] = useState<HasilGeocoding | null>(null);
   const [hasil, setHasil] = useState<HasilCuacaOffline | null>(null);
-  const [kotaTersimpan, setKotaTersimpan] = useState<RingkasanKotaTersimpan[]>(
-    [],
-  );
+  const [kotaTersimpan, setKotaTersimpan] = useState<RingkasanKotaTersimpan[]>([]);
   const [sedangMemuat, setSedangMemuat] = useState(false);
   const [pesanError, setPesanError] = useState<string | null>(null);
   const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
+
+  const { isDarkMode } = useTheme();
 
   const teksTertunda = useDebounce(teksCari, 500);
   const requestIdRef = useRef(0);
@@ -83,7 +83,7 @@ export default function HalamanUtama() {
           latitude: kota.latitude,
           longitude: kota.longitude,
         },
-        { paksaPerbarui },
+        { paksaPerbarui }
       );
       if (idSaatIni !== requestIdRef.current) return;
       setHasil(data);
@@ -92,7 +92,7 @@ export default function HalamanUtama() {
       if (idSaatIni !== requestIdRef.current) return;
       setHasil(null);
       setPesanError(
-        "Belum ada data tersimpan dan tidak ada koneksi internet. Sambungkan internet lalu coba lagi.",
+        "Belum ada data tersimpan dan tidak ada koneksi internet. Sambungkan internet lalu coba lagi."
       );
     } finally {
       if (idSaatIni === requestIdRef.current) setSedangMemuat(false);
@@ -103,13 +103,13 @@ export default function HalamanUtama() {
     const status = await mintaIzinLokasi();
     if (status === "denied") {
       setPesanLokasi(
-        "Izin lokasi ditolak. Silakan cari kota secara manual di atas.",
+        "Izin lokasi ditolak. Silakan cari kota secara manual di atas."
       );
       return;
     }
     if (status === "unavailable") {
       setPesanLokasi(
-        "Layanan lokasi tidak aktif di perangkat ini. Silakan cari kota secara manual.",
+        "Layanan lokasi tidak aktif di perangkat ini. Silakan cari kota secara manual."
       );
       return;
     }
@@ -125,9 +125,14 @@ export default function HalamanUtama() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: isDarkMode ? "#121212" : "#ffffff",
+      }}
+    >
       <ScrollView
-        contentContainerStyle={{ padding: 16, gap: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 96, gap: 16 }}
         keyboardShouldPersistTaps="handled"
       >
         <SearchBox onCari={setTeksCari} />
@@ -136,16 +141,36 @@ export default function HalamanUtama() {
           onPress={gunakanLokasiSaatIni}
         />
         {pesanLokasi && (
-          <Text accessibilityLabel={pesanLokasi}>{pesanLokasi}</Text>
+          <Text
+            accessibilityLabel={pesanLokasi}
+            style={{ color: isDarkMode ? "#ff6b6b" : "#d9534f" }}
+          >
+            {pesanLokasi}
+          </Text>
         )}
         {hasilPencarian.map((kota) => (
-          <TouchableOpacity key={kota.id} onPress={() => pilihKota(kota)}>
-            <Text>{kota.name}</Text>
+          <TouchableOpacity
+            key={kota.id}
+            onPress={() => pilihKota(kota)}
+            style={{
+              padding: 10,
+              backgroundColor: isDarkMode ? "#1e1e1e" : "#f0f0f0",
+              borderRadius: 6,
+            }}
+          >
+            <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
+              {kota.name}
+            </Text>
           </TouchableOpacity>
         ))}
         {kotaTersimpan.length > 0 && (
           <View style={{ gap: 6 }}>
-            <Text style={{ fontWeight: "bold" }}>
+            <Text
+              style={{
+                fontWeight: "bold",
+                color: isDarkMode ? "#ffffff" : "#000000",
+              }}
+            >
               Tersimpan di perangkat (bisa dibuka offline)
             </Text>
             {kotaTersimpan.map((k) => (
@@ -160,16 +185,30 @@ export default function HalamanUtama() {
                     country: "",
                   })
                 }
+                style={{
+                  padding: 8,
+                  backgroundColor: isDarkMode ? "#1e1e1e" : "#f9f9f9",
+                  borderRadius: 6,
+                }}
               >
-                <Text>{k.nama}</Text>
+                <Text style={{ color: isDarkMode ? "#4da6ff" : "#007AFF" }}>
+                  {k.nama}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
         )}
-        {sedangMemuat && <ActivityIndicator />}
+        {sedangMemuat && (
+          <ActivityIndicator color={isDarkMode ? "#ffffff" : "#007AFF"} />
+        )}
         {pesanError && (
-          <View>
-            <Text accessibilityLabel={pesanError}>{pesanError}</Text>
+          <View style={{ gap: 8 }}>
+            <Text
+              accessibilityLabel={pesanError}
+              style={{ color: isDarkMode ? "#ff6b6b" : "#d9534f" }}
+            >
+              {pesanError}
+            </Text>
             <Button
               title="Coba Lagi"
               onPress={() => kotaTerpilih && pilihKota(kotaTerpilih, true)}
@@ -187,8 +226,8 @@ export default function HalamanUtama() {
               suhu={hasil.cuaca.saatIni.suhu}
               tingkatAQI={konversiTingkatAQI(hasil.kualitasUdara.indeksAQI)}
             />
-            <Text style={{ fontSize: 12, color: "#888888" }}>
-              Kondisi: {labelKodeCuaca(hasil.cuaca.saatIni.kodeCuaca)} • Angin{" "}
+            <Text style={{ fontSize: 12, color: isDarkMode ? "#aaaaaa" : "#888888" }}>
+              Kondisi: {labelKodeCuaca(hasil.cuaca.saatIni.kodeCuaca)} | Angin{" "}
               {hasil.cuaca.saatIni.kecepatanAngin} km/j
             </Text>
             <Button

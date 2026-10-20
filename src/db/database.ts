@@ -3,15 +3,28 @@ import * as SQLite from "expo-sqlite";
 
 const VERSI_DATABASE = 2;
 
-export async function ambilDatabase() {
+/** Interface minimal yang mencakup semua method SQLite yang dipakai di proyek ini */
+export interface DatabaseLike {
+  getFirstAsync<T>(sql: string, params?: unknown[]): Promise<T | null>;
+  getAllAsync<T>(sql: string, params?: unknown[]): Promise<T[]>;
+  runAsync(sql: string, params?: unknown[]): Promise<{ changes: number }>;
+  execAsync(sql: string): Promise<void>;
+}
+
+let _dbInstance: DatabaseLike | null = null;
+
+export async function ambilDatabase(): Promise<DatabaseLike> {
+  if (_dbInstance) return _dbInstance;
+
   const db = await SQLite.openDatabaseAsync("jelajah_aman.db");
-  await migrasiDatabase(db);
-  return db;
+  await migrasiDatabase(db as unknown as DatabaseLike);
+  _dbInstance = db as unknown as DatabaseLike;
+  return _dbInstance;
 }
 
 export const bukaDatabase = ambilDatabase;
 
-async function migrasiDatabase(db: SQLite.SQLiteDatabase) {
+async function migrasiDatabase(db: DatabaseLike) {
   const result = await db.getFirstAsync<{ user_version: number }>(
     "PRAGMA user_version"
   );
@@ -42,3 +55,4 @@ async function migrasiDatabase(db: SQLite.SQLiteDatabase) {
 
   await db.execAsync(`PRAGMA user_version = ${VERSI_DATABASE}`);
 }
+
